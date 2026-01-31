@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contact</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f3ee;
+        --ink: #1f1a15;
+        --muted: #5b544c;
+        --accent: #c15b2e;
+        --border: #ded6cb;
+        --ok: #0f7a4c;
+        --err: #b42318;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Source Serif 4", "Iowan Old Style", "Times New Roman", serif;
+        background: radial-gradient(circle at top, #fff7eb 0%, var(--bg) 45%, #efe7dd 100%);
+        color: var(--ink);
+      }
+      .wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 16px;
+      }
+      .card {
+        width: 100%;
+        max-width: 720px;
+        background: #fffdf9;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 16px 40px rgba(31, 26, 21, 0.12);
+        animation: fadeUp 500ms ease-out;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+      }
+      p.lead {
+        margin: 0 0 24px;
+        color: var(--muted);
+      }
+      form {
+        display: grid;
+        gap: 16px;
+      }
+      label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+      input, textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        font: inherit;
+        background: #fff;
+      }
+      textarea { min-height: 140px; resize: vertical; }
+      .row {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 12px 22px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 150ms ease, box-shadow 150ms ease;
+      }
+      button:hover { transform: translateY(-1px); box-shadow: 0 8px 16px rgba(193, 91, 46, 0.3); }
+      button:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+      .status {
+        font-size: 14px;
+      }
+      .status.ok { color: var(--ok); }
+      .status.err { color: var(--err); }
+      .hint { color: var(--muted); font-size: 13px; }
+      .hidden { display: none; }
+      .honeypot {
+        position: absolute;
+        left: -9999px;
+        opacity: 0;
+        height: 0;
+        width: 0;
+      }
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @media (max-width: 600px) {
+        .card { padding: 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Contact</h1>
+        <p class="lead">Send a note and we will get back to you soon.</p>
+        <form id="contactForm" novalidate>
+          <div class="row">
+            <div>
+              <label for="name">Name *</label>
+              <input id="name" name="name" autocomplete="name" required maxlength="100" />
+            </div>
+            <div>
+              <label for="email">Email *</label>
+              <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="subject">Subject</label>
+              <input id="subject" name="subject" maxlength="150" />
+            </div>
+            <div>
+              <label for="site">Site</label>
+              <input id="site" name="site" readonly />
+              <div class="hint">Provided by the ?site= query parameter.</div>
+            </div>
+          </div>
+          <div>
+            <label for="message">Message *</label>
+            <textarea id="message" name="message" required maxlength="4000"></textarea>
+          </div>
+          <div class="honeypot" aria-hidden="true">
+            <label for="company">Company</label>
+            <input id="company" name="company" tabindex="-1" autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button id="submitBtn" type="submit">Send message</button>
+            <span id="status" class="status"></span>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script src="/form/form.js"></script>
+  </body>
+</html>
