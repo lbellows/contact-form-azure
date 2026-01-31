@@ -2,11 +2,8 @@
   const form = document.getElementById("contactForm");
   const statusEl = document.getElementById("status");
   const submitBtn = document.getElementById("submitBtn");
-  const siteInput = document.getElementById("site");
-
   const params = new URLSearchParams(window.location.search);
   const site = params.get("site") || "";
-  siteInput.value = site;
 
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,7 +54,6 @@
       if (response.ok && result.ok) {
         setStatus("Thanks! Your message has been sent.", true);
         form.reset();
-        siteInput.value = site;
       } else {
         const message = result.error === "forbidden_site"
           ? "This form is not configured for this site."
