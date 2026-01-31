@@ -94,7 +94,7 @@ curl -i -X POST https://<your-swa-domain>/api/submit \
 ```
 
 ## Embedding
-Use the iframe snippet at `app/form/embed-snippet.html`. The query param `site` must match one of the values in `ALLOWED_SITES`.
+Use the iframe snippet at `app/embed-snippet.html`. The query param `site` must match one of the values in `ALLOWED_SITES`.
 
 ## Security headers / iframe embedding
 `staticwebapp.config.json` sets:

@@ -4,9 +4,9 @@ Project: Azure Static Web Apps + Azure Functions contact form using ACS Email.
 
 ## Repository Layout
 - Static site: `app/`
-  - Form page: `app/form/index.html`
-  - Client script: `app/form/form.js`
-  - Embed snippet: `app/form/embed-snippet.html`
+  - Form page: `app/index.html`
+  - Client script: `app/form.js`
+  - Embed snippet: `app/embed-snippet.html`
 - Azure Functions API: `api/`
   - Function host: `api/Program.cs`
   - Function project: `api/ContactFormApi.csproj`
