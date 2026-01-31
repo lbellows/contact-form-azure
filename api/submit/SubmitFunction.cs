@@ -114,9 +114,9 @@ public class SubmitFunction
                 });
 
             var sendOperation = await client.SendAsync(WaitUntil.Completed, message);
-            logger.LogInformation("Email sent. Status: {Status}, MessageId: {MessageId}, Site: {Site}, Ip: {Ip}, Ua: {Ua}, MessageLength: {MessageLength}",
-                sendOperation.Value.Status,
-                sendOperation.Value.MessageId,
+            var result = sendOperation.Value;
+            logger.LogInformation("Email sent. Status: {Status}, Site: {Site}, Ip: {Ip}, Ua: {Ua}, MessageLength: {MessageLength}",
+                result?.Status,
                 cleaned.Site,
                 ip,
                 userAgent,
@@ -273,11 +273,11 @@ public class SubmitFunction
 
     private sealed class SubmitPayload
     {
-        public string? Name { get; set; }
-        public string? Email { get; set; }
-        public string? Subject { get; set; }
-        public string? Message { get; set; }
-        public string? Site { get; set; }
-        public string? Company { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Subject { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public string Site { get; set; } = string.Empty;
+        public string Company { get; set; } = string.Empty;
     }
 }
