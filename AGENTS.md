@@ -45,6 +45,10 @@ Project: Azure Static Web Apps + Azure Functions contact form using ACS Email.
   - 429 `{ ok:false, error:"rate_limited" }`
   - 500 `{ ok:false, error:"email_send_failed" }` or `server_error` when misconfigured.
 
+- Turnstile:
+  - `GET /api/config` returns `{ turnstileSiteKey }` from `TURNSTILE_SITE_KEY` (null when unset); the form renders the widget only when it is non-null.
+  - When `TURNSTILE_SECRET_KEY` is set, `/api/submit` verifies `turnstileToken` with siteverify (fail closed) → `403 { ok:false, error:"captcha_failed" }`.
+
 ## SWA / Security Headers
 - Keep `/form` route in `staticwebapp.config.json`.
 - Headers set:

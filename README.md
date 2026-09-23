@@ -27,6 +27,7 @@ Required environment variables (set in the SWA Azure portal):
 - `ACS_FROM_EMAIL` (must be a configured sender identity)
 - `TO_EMAIL` (your inbox)
 - `ALLOWED_SITES` (comma-separated, e.g. `siteA,siteB,siteC`)
+- `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` (optional) — Cloudflare Turnstile. With both unset the form behaves as before. The site key is public and served by `GET /api/config`; once the secret is set, `/api/submit` requires a valid token (`403 { ok:false, error:"captcha_failed" }` otherwise). The widget's hostname list must include this SWA's hostname, since that is the page the widget renders on, not the site embedding the iframe.
 
 Where to set env vars in SWA:
 - Azure Portal → Static Web Apps → your app → Configuration → Application settings.

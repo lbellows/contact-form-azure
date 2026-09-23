@@ -16,6 +16,8 @@ public class SubmitFunction
     private static readonly TimeSpan Window = TimeSpan.FromMinutes(WindowMinutes);
     private static readonly Dictionary<string, List<DateTime>> IpBuckets = new();
     private static readonly object BucketLock = new();
+    private const string TurnstileVerifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(10) };
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -62,6 +64,14 @@ public class SubmitFunction
         if (string.IsNullOrWhiteSpace(cleaned.Site) || !allowedSites.Contains(cleaned.Site))
         {
             return CreateJson(req, HttpStatusCode.Forbidden, new { ok = false, error = "forbidden_site" });
+        }
+
+        // Enforced only once TURNSTILE_SECRET_KEY is set, so the code can ship before the widget exists.
+        var turnstileSecret = Environment.GetEnvironmentVariable("TURNSTILE_SECRET_KEY");
+        if (!string.IsNullOrWhiteSpace(turnstileSecret)
+            && !await VerifyTurnstileAsync(turnstileSecret, payload.TurnstileToken, ip, logger))
+        {
+            return CreateJson(req, HttpStatusCode.Forbidden, new { ok = false, error = "captcha_failed" });
         }
 
         var connectionString = Environment.GetEnvironmentVariable("ACS_EMAIL_CONNECTION_STRING");
@@ -128,6 +138,40 @@ public class SubmitFunction
         {
             logger.LogError(ex, "Email send failed. Site: {Site}, Ip: {Ip}", cleaned.Site, ip);
             return CreateJson(req, HttpStatusCode.InternalServerError, new { ok = false, error = "email_send_failed" });
+        }
+    }
+
+    private static async Task<bool> VerifyTurnstileAsync(string secret, string? token, string ip, ILogger logger)
+    {
+        if (string.IsNullOrWhiteSpace(token) || token.Length > 2048)
+        {
+            return false;
+        }
+
+        var form = new Dictionary<string, string> { ["secret"] = secret.Trim(), ["response"] = token };
+        if (ip != "unknown")
+        {
+            form["remoteip"] = ip;
+        }
+
+        try
+        {
+            using var response = await Http.PostAsync(TurnstileVerifyUrl, new FormUrlEncodedContent(form));
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            if (doc.RootElement.TryGetProperty("success", out var success) && success.GetBoolean())
+            {
+                return true;
+            }
+
+            var codes = doc.RootElement.TryGetProperty("error-codes", out var errors) ? errors.ToString() : "[]";
+            logger.LogWarning("Turnstile rejected a submission. Ip: {Ip}, Errors: {Errors}", ip, codes);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            // Fail closed: an unverifiable token is treated like a missing one.
+            logger.LogError(ex, "Turnstile verification failed. Ip: {Ip}", ip);
+            return false;
         }
     }
 
@@ -292,5 +336,6 @@ public class SubmitFunction
         public string Message { get; set; } = string.Empty;
         public string Site { get; set; } = string.Empty;
         public string Company { get; set; } = string.Empty;
+        public string? TurnstileToken { get; set; }
     }
 }

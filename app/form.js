@@ -7,6 +7,25 @@
 
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+  // Turnstile renders only when the API publishes a site key, so the form works
+  // unchanged until the widget is configured.
+  const turnstileEl = document.getElementById("turnstile");
+  let turnstileWidget = null;
+  fetch("/api/config")
+    .then((r) => (r.ok ? r.json() : {}))
+    .then(({ turnstileSiteKey }) => {
+      if (!turnstileSiteKey) return;
+      window.onTurnstileLoad = () => {
+        turnstileEl.classList.remove("hidden");
+        turnstileWidget = window.turnstile.render(turnstileEl, { sitekey: turnstileSiteKey });
+      };
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad";
+      script.async = true;
+      document.head.appendChild(script);
+    })
+    .catch(() => {});
+
   const setStatus = (message, isOk) => {
     statusEl.textContent = message;
     statusEl.classList.toggle("ok", Boolean(isOk));
@@ -33,9 +52,13 @@
       message: form.message.value.trim(),
       site,
       company: form.company.value.trim(),
+      turnstileToken: turnstileWidget !== null ? window.turnstile.getResponse(turnstileWidget) || "" : undefined,
     };
 
     const errors = validate(payload);
+    if (turnstileWidget !== null && !payload.turnstileToken) {
+      errors.push("Please complete the verification.");
+    }
     if (errors.length) {
       setStatus(errors[0], false);
       return;
@@ -55,7 +78,9 @@
         setStatus("Thanks! Your message has been sent.", true);
         form.reset();
       } else {
-        const message = result.error === "forbidden_site"
+        const message = result.error === "captcha_failed"
+          ? "Verification failed. Please try again."
+          : result.error === "forbidden_site"
           ? "This form is not configured for this site."
           : result.error === "rate_limited"
             ? "Please wait a bit before sending another message."
@@ -67,6 +92,8 @@
     } catch (err) {
       setStatus("Network error. Please try again.", false);
     } finally {
+      // Tokens are single-use; get a fresh one for any retry.
+      if (turnstileWidget !== null) window.turnstile.reset(turnstileWidget);
       submitBtn.disabled = false;
     }
   });
