@@ -3,7 +3,9 @@
   const statusEl = document.getElementById("status");
   const submitBtn = document.getElementById("submitBtn");
   const params = new URLSearchParams(window.location.search);
-  const site = params.get("site") || "";
+  // Embeds use /form/<site>, whose route sets the CSP naming the domains allowed to frame it.
+  const pathSite = (window.location.pathname.match(/^\/form\/([A-Za-z0-9_-]+)\/?$/) || [])[1];
+  const site = pathSite || params.get("site") || "";
 
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
