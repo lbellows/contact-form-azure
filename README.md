@@ -33,8 +33,7 @@ Paste this where the form should appear, replacing `<site>` with the site's id f
 - Leave room for the Turnstile widget (about 65px below the message box). If the bottom of the form is cut off,
   raise `min-height`.
 - Messages arrive at `TO_EMAIL` with the subject `[ContactForm][<site>] <subject>`, so you can filter by site.
-  The visitor's email address is in the message body. Hitting reply goes to the sender address (`ACS_FROM_EMAIL`),
-  not to the visitor, so copy their address into a new email.
+  Reply-To is set to the visitor's address, so hitting reply answers them directly.
 
 `app/embed-snippet.html` is a responsive version of the same iframe.
 

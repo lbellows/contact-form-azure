@@ -122,6 +122,8 @@ public class SubmitFunction
                     PlainText = bodyText,
                     Html = bodyHtml
                 });
+            // IsValidEmail only accepts a bare address, so this cannot carry a display name or header break.
+            message.ReplyTo.Add(new EmailAddress(cleaned.Email));
 
             var sendOperation = await client.SendAsync(WaitUntil.Completed, message);
             var result = sendOperation.Value;

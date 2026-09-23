@@ -37,6 +37,7 @@ Project: Azure Static Web Apps + Azure Functions contact form using ACS Email.
   - Env vars: `ACS_EMAIL_CONNECTION_STRING`, `ACS_FROM_EMAIL`, `TO_EMAIL`.
   - Subject: `[ContactForm][${site}] ${subject || "(no subject)"}`
   - Include name/email/subject/message/site/timestamp/IP/user-agent.
+  - Reply-To is the visitor's validated email (bare address only, no display name).
   - Don’t log message content; log message length only.
 - Responses:
   - 200 `{ ok:true }`
