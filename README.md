@@ -8,6 +8,83 @@ Production-ready contact form hosted on Azure Static Web Apps (SWA) with an Azur
 - ACS Email delivery using official .NET SDK
 - In-memory rate limiting per IP
 - Allowlisted `site` identifiers for iframe embedding
+- Cloudflare Turnstile bot check (strict: fails closed)
+
+## Using the form
+
+Live at `https://proud-grass-0ee553c0f.2.azurestaticapps.net`. Everything runs on Azure; Cloudflare is used only
+for the Turnstile check (see [How Turnstile fits in](#how-turnstile-fits-in)).
+
+### Put the form on an existing site
+Paste this where the form should appear, replacing `<site>` with the site's id from the
+[Embedding](#embedding) table:
+
+```html
+<iframe
+  title="Contact form"
+  src="https://proud-grass-0ee553c0f.2.azurestaticapps.net/form/<site>"
+  style="width:100%;min-height:640px;border:0"
+  loading="lazy"
+></iframe>
+```
+
+- The page must be served from one of that site's domains, over `https`. Anywhere else the browser refuses to
+  show the frame, which is the point: nobody can reuse your form on their page.
+- Leave room for the Turnstile widget (about 65px below the message box). If the bottom of the form is cut off,
+  raise `min-height`.
+- Messages arrive at `TO_EMAIL` with the subject `[ContactForm][<site>] <subject>`, so you can filter by site.
+  The visitor's email address is in the message body. Hitting reply goes to the sender address (`ACS_FROM_EMAIL`),
+  not to the visitor, so copy their address into a new email.
+
+`app/embed-snippet.html` is a responsive version of the same iframe.
+
+### Add a new site or domain
+1. Choose a short id (letters, digits, `-`, `_`), e.g. `newshop`.
+2. Add it to `ALLOWED_SITES` in the SWA settings (Portal → Static Web Apps → `contact-form-swa` →
+   Environment variables), or with the az CLI:
+   `az staticwebapp appsettings set -n contact-form-swa --setting-names ALLOWED_SITES=<existing>,newshop`
+   (setting it replaces the whole list, so include the existing ids).
+3. Copy an existing `/form/<site>` route in `app/staticwebapp.config.json`, rename it, and list the domains that
+   may embed it in its `frame-ancestors` header (include `https://www.` for an apex).
+4. Commit and push to `main`; the workflow deploys it. Add the row to the table under [Embedding](#embedding).
+
+To let one more domain embed an existing site, only step 3 is needed. Turnstile needs no change for either,
+because the widget runs on this app's page, not on the embedding site.
+
+### How Turnstile fits in
+1. The form page fetches the public site key from `GET /api/config` and renders Cloudflare's widget. Most
+   visitors pass invisibly; a suspicious browser gets a checkbox.
+2. The widget's single-use token is sent with the message to `/api/submit`.
+3. The Azure function asks Cloudflare's siteverify endpoint whether the token is valid, and only then sends the
+   email. A missing, used or invalid token gets `403 captcha_failed`, and the visitor sees a message asking them
+   to complete the check again.
+
+**It is strict on purpose.** If Cloudflare cannot be reached, submissions are rejected rather than let through.
+Do not change this to fail open: that turns any Cloudflare outage, or anyone able to block it, into a spam
+window.
+
+Keys are managed in the Cloudflare dashboard (Turnstile → the widget for this form). The site key is public; the
+secret lives only in the SWA settings (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`). The widget's hostname list
+must include the hostname the form is served from (`proud-grass-0ee553c0f.2.azurestaticapps.net`), plus any
+custom domain added to the SWA later. To rotate the secret, rotate it in Cloudflare and update
+`TURNSTILE_SECRET_KEY`. To turn Turnstile off, remove both settings.
+
+### Check that it works
+- `curl https://proud-grass-0ee553c0f.2.azurestaticapps.net/api/config` should return a non-null
+  `turnstileSiteKey`.
+- A submission with no token should be refused:
+
+  ```bash
+  curl -s -X POST https://proud-grass-0ee553c0f.2.azurestaticapps.net/api/submit \
+    -H "Content-Type: application/json" \
+    -d '{"site":"lb","name":"x","email":"x@example.com","message":"x"}'
+  # {"ok":false,"error":"captcha_failed"}
+  ```
+
+- For a real end-to-end test, open `/form/<site>` directly in a normal browser, submit, and check the inbox.
+  Automated browsers are usually challenged or rejected by Turnstile, so a headless test failing there does not
+  mean the form is broken.
+- Each IP gets 5 requests per 10 minutes, so repeated testing will hit `429 rate_limited`; wait it out.
 
 ## Prerequisites
 - Azure subscription
@@ -75,18 +152,22 @@ Payload:
   "subject": "Hello",
   "message": "Test message",
   "site": "siteA",
-  "company": ""
+  "company": "",
+  "turnstileToken": "<token from the widget>"
 }
 ```
+
+`turnstileToken` is required whenever `TURNSTILE_SECRET_KEY` is set.
 
 Responses:
 - `200` `{ ok: true }`
 - `400` `{ ok:false, error:"validation_error", details:["..."] }`
 - `403` `{ ok:false, error:"forbidden_site" }`
+- `403` `{ ok:false, error:"captcha_failed" }` (missing, used or invalid Turnstile token, or siteverify unreachable)
 - `429` `{ ok:false, error:"rate_limited" }`
 - `500` `{ ok:false, error:"email_send_failed" }`
 
-Example test:
+Example test (only succeeds with Turnstile off; see [Check that it works](#check-that-it-works)):
 
 ```bash
 curl -i -X POST https://<your-swa-domain>/api/submit \
