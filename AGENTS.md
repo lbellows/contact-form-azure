@@ -28,6 +28,10 @@ Project: Azure Static Web Apps + Azure Functions contact form using ACS Email.
 - Rate limiting:
   - Per-IP, 5 requests per 10 minutes, in-memory sliding window.
   - On limit → `429 { ok:false, error:"rate_limited" }`.
+  - Checked before validation, so junk requests count too.
+  - Client IP is the **second-from-last** `X-Forwarded-For` entry, port stripped. SWA passes client-sent
+    `X-Forwarded-For` / `X-Client-IP` / `X-Azure-ClientIP` through untouched and appends
+    `<client>:port, <internal hop>:port` (measured 2026-09-22 on a preview env). Never trust the first entry.
 - ACS Email:
   - Use `Azure.Communication.Email` EmailClient with connection string.
   - Env vars: `ACS_EMAIL_CONNECTION_STRING`, `ACS_FROM_EMAIL`, `TO_EMAIL`.

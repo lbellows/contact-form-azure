@@ -29,6 +29,12 @@ public class SubmitFunction
     {
         var logger = executionContext.GetLogger("SubmitFunction");
 
+        var ip = GetClientIp(req);
+        if (IsRateLimited(ip))
+        {
+            return CreateJson(req, (HttpStatusCode)429, new { ok = false, error = "rate_limited" });
+        }
+
         var parseResult = await ParseBodyAsync(req);
         if (parseResult.Error != null)
         {
@@ -56,12 +62,6 @@ public class SubmitFunction
         if (string.IsNullOrWhiteSpace(cleaned.Site) || !allowedSites.Contains(cleaned.Site))
         {
             return CreateJson(req, HttpStatusCode.Forbidden, new { ok = false, error = "forbidden_site" });
-        }
-
-        var ip = GetClientIp(req);
-        if (IsRateLimited(ip))
-        {
-            return CreateJson(req, (HttpStatusCode)429, new { ok = false, error = "rate_limited" });
         }
 
         var connectionString = Environment.GetEnvironmentVariable("ACS_EMAIL_CONNECTION_STRING");
@@ -208,20 +208,33 @@ public class SubmitFunction
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// SWA passes client-sent X-Forwarded-For (and X-Client-IP, X-Azure-ClientIP, ...) through
+    /// untouched and appends "&lt;client&gt;:port, &lt;internal hop&gt;:port" (measured 2026-09-22).
+    /// Only the entry SWA appended for the client, second from the right, can be trusted.
+    /// </summary>
     private static string GetClientIp(HttpRequestData req)
     {
-        var forwarded = GetHeader(req, "x-forwarded-for");
-        if (!string.IsNullOrWhiteSpace(forwarded))
+        var entries = (GetHeader(req, "x-forwarded-for") ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (entries.Length == 0)
         {
-            var first = forwarded.Split(',').FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(first))
-            {
-                return first.Trim();
-            }
+            return "unknown";
         }
 
-        var clientIp = GetHeader(req, "x-client-ip");
-        return !string.IsNullOrWhiteSpace(clientIp) ? clientIp : "unknown";
+        return StripPort(entries.Length >= 2 ? entries[^2] : entries[^1]);
+    }
+
+    private static string StripPort(string hostPort)
+    {
+        if (hostPort.StartsWith('['))
+        {
+            var close = hostPort.IndexOf(']');
+            return close > 0 ? hostPort[1..close] : hostPort;
+        }
+
+        var colon = hostPort.LastIndexOf(':');
+        return colon > 0 && hostPort.IndexOf(':') == colon ? hostPort[..colon] : hostPort;
     }
 
     private static string? GetHeader(HttpRequestData req, string key)
