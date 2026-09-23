@@ -95,14 +95,30 @@ curl -i -X POST https://<your-swa-domain>/api/submit \
 ```
 
 ## Embedding
-Use the iframe snippet at `app/embed-snippet.html`. The query param `site` must match one of the values in `ALLOWED_SITES`.
+Use the iframe snippet at `app/embed-snippet.html`, pointing at `/form/<site>`. Each `/form/<site>` route in
+`app/staticwebapp.config.json` sets `Content-Security-Policy: frame-ancestors ...` listing the only domains
+allowed to frame that site's form; every other page sends `frame-ancestors 'none'`. `<site>` must also be in
+`ALLOWED_SITES`.
+
+| Site | Domains allowed to embed (plus `www.` for apexes) |
+|---|---|
+| `4leaf` | 4leaf.cc, 4leafelectric.com, 4leafconstruction.com |
+| `irondev` | irondeveloper.com, check.irondeveloper.com |
+| `parked` | ptreviews.com, swipe.tips, proxyable.com |
+| `catholiccoder` | catholiccoder.com |
+| `lb` | liambellows.com, blog.liambellows.com |
+| `ragstripe` | chat.lcb2.com |
+
+To add a site: add its id to `ALLOWED_SITES` in the SWA settings and a matching route in
+`app/staticwebapp.config.json`.
 
 ## Security headers / iframe embedding
-`staticwebapp.config.json` sets:
+`app/staticwebapp.config.json` sets:
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
+- `Content-Security-Policy: frame-ancestors 'none'` globally, overridden per `/form/<site>` route with that site's domains
 
-Do not set `X-Frame-Options: DENY` because the form is meant to be embedded. If you know the exact domains allowed to embed the form, configure a `Content-Security-Policy` header with `frame-ancestors` for those domains. If you do not know them, leaving it unset is more permissive but less secure.
+Do not set `X-Frame-Options` — `frame-ancestors` is the per-site control.
 
 ## Deployment
 This repo includes a GitHub Actions workflow for SWA. Connect your repo in Azure Static Web Apps and set the repository secrets as prompted by Azure.

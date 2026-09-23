@@ -11,13 +11,13 @@ Project: Azure Static Web Apps + Azure Functions contact form using ACS Email.
   - Function host: `api/Program.cs`
   - Function project: `api/ContactFormApi.csproj`
   - Submit function: `api/submit/SubmitFunction.cs`
-- SWA config: `staticwebapp.config.json`
+- SWA config: `app/staticwebapp.config.json`
 - Workflow: `.github/workflows/azure-static-web-apps.yml`
 - Docs: `README.md`
 
 ## Behavior Requirements (Do Not Break)
-- Form hosted at `/form` and submits to `/api/submit` (POST).
-- Payload includes `site` from query param and `company` honeypot.
+- Form hosted at `/form/<site>` (one route per site in `app/staticwebapp.config.json`, each with a `frame-ancestors` CSP) and submits to `/api/submit` (POST).
+- Payload includes `site` from the `/form/<site>` path (falls back to `?site=`) and `company` honeypot.
 - Server validation:
   - Required: `name`, `email`, `message`.
   - Max lengths: name 100, email 254, subject 150, message 4000, site 50.

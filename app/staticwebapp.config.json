@@ -1,0 +1,51 @@
+{
+  "routes": [
+    {
+      "route": "/form/4leaf",
+      "rewrite": "/index.html",
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors https://4leaf.cc https://www.4leaf.cc https://4leafelectric.com https://www.4leafelectric.com https://4leafconstruction.com https://www.4leafconstruction.com"
+      }
+    },
+    {
+      "route": "/form/irondev",
+      "rewrite": "/index.html",
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors https://irondeveloper.com https://www.irondeveloper.com https://check.irondeveloper.com"
+      }
+    },
+    {
+      "route": "/form/parked",
+      "rewrite": "/index.html",
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors https://ptreviews.com https://www.ptreviews.com https://swipe.tips https://www.swipe.tips https://proxyable.com https://www.proxyable.com"
+      }
+    },
+    {
+      "route": "/form/catholiccoder",
+      "rewrite": "/index.html",
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors https://catholiccoder.com https://www.catholiccoder.com"
+      }
+    },
+    {
+      "route": "/form/lb",
+      "rewrite": "/index.html",
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors https://liambellows.com https://www.liambellows.com https://blog.liambellows.com"
+      }
+    },
+    {
+      "route": "/form/ragstripe",
+      "rewrite": "/index.html",
+      "headers": {
+        "Content-Security-Policy": "frame-ancestors https://chat.lcb2.com"
+      }
+    }
+  ],
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Content-Security-Policy": "frame-ancestors 'none'"
+  }
+}
