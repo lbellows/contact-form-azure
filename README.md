@@ -88,7 +88,7 @@ custom domain added to the SWA later. To rotate the secret, rotate it in Cloudfl
 ## Prerequisites
 - Azure subscription
 - GitHub repo connected to Azure Static Web Apps
-- .NET 8 SDK
+- .NET 10 SDK
 - Azure Functions Core Tools (for local API runs)
 - Azure Static Web Apps CLI (for `swa start`)
 

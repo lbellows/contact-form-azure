@@ -1,4 +1,7 @@
 {
+  "platform": {
+    "apiRuntime": "dotnet-isolated:10.0"
+  },
   "routes": [
     {
       "route": "/form/4leaf",
