@@ -59,7 +59,7 @@ Project: Azure Static Web Apps + Azure Functions contact form using ACS Email.
 - If you add CSP `frame-ancestors`, ensure it aligns with README guidance.
 
 ## Style / Code Quality
-- C#/.NET 8 isolated Functions.
+- C#/.NET 10 isolated Functions (`apiRuntime` pinned in `app/staticwebapp.config.json`).
 - Keep dependencies minimal.
 - Add small helper methods for validation, JSON parsing, and rate limiting.
 - Avoid non-ASCII unless already in file.
